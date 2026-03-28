@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="theme-color" content="#0a0a0a"/>
+<title>Bullion Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#0a0a0a;--surface:#141414;--surface2:#1e1e1e;--border:#2a2a2a;--gold:#FFD700;--gold-dim:#FFD70022;--silver:#C0C0C0;--silver-dim:#C0C0C022;--green:#00e676;--red:#ff5252;--text:#f0f0f0;--text2:#888;--text3:#444;--radius:16px;--radius-sm:10px;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;overflow:hidden;}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh;max-width:430px;margin:0 auto;}
+.header{padding:48px 20px 16px;background:var(--bg);}
+.header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.app-title{font-size:18px;font-weight:800;color:var(--text);}
+.currency-toggle{display:flex;background:var(--surface2);border-radius:20px;padding:3px;gap:2px;}
+.cur-btn{padding:4px 12px;border-radius:16px;font-size:11px;font-weight:700;border:none;background:none;color:var(--text2);cursor:pointer;font-family:'Syne',sans-serif;}
+.cur-btn.active{background:var(--gold);color:#000;}
+.price-strip{display:flex;gap:10px;margin-bottom:4px;}
+.price-card{flex:1;background:var(--surface);border-radius:var(--radius-sm);padding:10px 12px;}
+.price-metal{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;}
+.price-metal.gold{color:var(--gold);}
+.price-metal.silver{color:var(--silver);}
+.price-val{font-size:15px;font-weight:800;font-family:'DM Mono',monospace;}
+.price-val.gold{color:var(--gold);}
+.price-val.silver{color:var(--silver);}
+.price-sub{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:2px;}
+.price-updated{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-align:center;padding:4px 0;}
+.tabs{display:flex;padding:0 20px;gap:4px;margin-bottom:4px;}
+.tab{flex:1;padding:8px 2px;text-align:center;font-size:10px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;border-radius:8px;cursor:pointer;color:var(--text2);border:none;background:none;font-family:'Syne',sans-serif;}
+.tab.active{background:var(--surface2);color:var(--text);}
+.scroll{flex:1;overflow-y:auto;padding:0 20px 100px;-webkit-overflow-scrolling:touch;}
+.scroll::-webkit-scrollbar{display:none;}
+
+/* Dashboard */
+.net-worth-card{background:var(--surface);border-radius:var(--radius);padding:20px;margin-bottom:12px;text-align:center;}
+.net-worth-label{font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;}
+.net-worth-val{font-size:32px;font-weight:800;color:var(--gold);margin-bottom:6px;}
+.net-worth-pnl{font-size:14px;font-weight:700;font-family:'DM Mono',monospace;}
+.net-worth-pnl.profit{color:var(--green);}
+.net-worth-pnl.loss{color:var(--red);}
+.metal-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.metal-card{background:var(--surface);border-radius:var(--radius);padding:14px;}
+.metal-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.metal-card-name{font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;}
+.metal-card-name.gold{color:var(--gold);}
+.metal-card-name.silver{color:var(--silver);}
+.metal-card-grams{font-size:11px;font-family:'DM Mono',monospace;color:var(--text2);}
+.metal-card-val{font-size:18px;font-weight:800;margin-bottom:4px;}
+.metal-card-val.gold{color:var(--gold);}
+.metal-card-val.silver{color:var(--silver);}
+.metal-card-invested{font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;margin-bottom:4px;}
+.metal-card-pnl{font-size:12px;font-weight:700;font-family:'DM Mono',monospace;}
+.metal-card-pnl.profit{color:var(--green);}
+.metal-card-pnl.loss{color:var(--red);}
+.allocation-card{background:var(--surface);border-radius:var(--radius);padding:14px;margin-bottom:12px;}
+.allocation-label{font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text2);margin-bottom:10px;}
+.alloc-bar{height:10px;background:var(--surface2);border-radius:5px;overflow:hidden;display:flex;margin-bottom:8px;}
+.alloc-gold{height:100%;background:var(--gold);border-radius:5px 0 0 5px;}
+.alloc-silver{height:100%;background:var(--silver);}
+.alloc-legend{display:flex;gap:16px;}
+.alloc-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;}
+.alloc-dot{width:8px;height:8px;border-radius:50%;}
+
+/* Add tab */
+.form-card{background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:12px;}
+.form-label{font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text2);margin-bottom:8px;}
+.metal-selector{display:flex;gap:8px;margin-bottom:16px;}
+.metal-chip{flex:1;padding:10px;text-align:center;border-radius:10px;font-size:13px;font-weight:700;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-family:'Syne',sans-serif;}
+.metal-chip.gold.active{background:var(--gold-dim);border-color:var(--gold);color:var(--gold);}
+.metal-chip.silver.active{background:var(--silver-dim);border-color:var(--silver);color:var(--silver);}
+.form-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Syne',sans-serif;font-size:14px;padding:10px 12px;margin-bottom:10px;}
+.form-input:focus{outline:none;border-color:var(--gold);}
+.form-input::placeholder{color:var(--text3);}
+.form-row{display:flex;gap:8px;margin-bottom:10px;}
+.form-row .form-input{margin-bottom:0;}
+.form-hint{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:10px;margin-top:-6px;}
+.add-btn{width:100%;padding:13px;background:var(--gold);color:#000;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;border:none;border-radius:10px;cursor:pointer;letter-spacing:0.05em;text-transform:uppercase;}
+.add-btn:active{opacity:0.8;}
+.current-price-hint{background:var(--surface2);border-radius:8px;padding:8px 12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+.hint-label{font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;}
+.hint-val{font-size:12px;font-weight:700;font-family:'DM Mono',monospace;}
+.hint-val.gold{color:var(--gold);}
+.hint-val.silver{color:var(--silver);}
+.use-btn{font-size:11px;color:var(--gold);font-family:'DM Mono',monospace;background:none;border:1px solid var(--gold);border-radius:12px;padding:3px 10px;cursor:pointer;}
+
+/* History */
+.history-item{background:var(--surface);border-radius:var(--radius-sm);padding:14px;margin-bottom:8px;}
+.history-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;}
+.history-left{}
+.history-metal{font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:3px;}
+.history-metal.gold{color:var(--gold);}
+.history-metal.silver{color:var(--silver);}
+.history-name{font-size:14px;font-weight:700;color:var(--text);}
+.history-date{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:2px;}
+.history-right{text-align:right;}
+.history-grams{font-size:16px;font-weight:800;font-family:'DM Mono',monospace;}
+.history-grams.gold{color:var(--gold);}
+.history-grams.silver{color:var(--silver);}
+.history-paid{font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;margin-top:2px;}
+.history-current{font-size:12px;font-weight:700;font-family:'DM Mono',monospace;margin-top:2px;}
+.history-current.profit{color:var(--green);}
+.history-current.loss{color:var(--red);}
+.del-btn{font-size:11px;color:var(--text3);background:none;border:1px solid var(--border);border-radius:12px;padding:3px 10px;cursor:pointer;margin-top:6px;font-family:'DM Mono',monospace;}
+.del-btn:active{color:var(--red);border-color:var(--red);}
+.no-data{text-align:center;padding:40px 0;color:var(--text3);font-size:13px;font-family:'DM Mono',monospace;}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.section-title{font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text2);}
+.loading{text-align:center;padding:20px;color:var(--text3);font-family:'DM Mono',monospace;font-size:12px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <div class="header-top">
+      <div class="app-title">Bullion Tracker</div>
+      <div class="currency-toggle">
+        <button class="cur-btn active" id="btn-inr" onclick="setCurrency('INR')">₹ INR</button>
+        <button class="cur-btn" id="btn-usd" onclick="setCurrency('USD')">$ USD</button>
+      </div>
+    </div>
+    <div class="price-strip">
+      <div class="price-card" onclick="overridePrice('gold')" style="cursor:pointer;">
+        <div class="price-metal gold">Gold ✎</div>
+        <div class="price-val gold" id="gold-price">—</div>
+        <div class="price-sub" id="gold-price-sub">per gram · tap to override</div>
+      </div>
+      <div class="price-card" onclick="overridePrice('silver')" style="cursor:pointer;">
+        <div class="price-metal silver">Silver ✎</div>
+        <div class="price-val silver" id="silver-price">—</div>
+        <div class="price-sub" id="silver-price-sub">per gram · tap to override</div>
+      </div>
+    </div>
+    <div class="price-updated" id="price-updated">Tap "Fetch Price" to load live Pune prices</div>
+    <button id="fetch-btn" onclick="fetchPrices(true)" style="width:100%;margin-top:8px;padding:10px;background:var(--surface2);color:var(--gold);font-family:'Syne',sans-serif;font-size:13px;font-weight:700;border:1px solid var(--gold);border-radius:10px;cursor:pointer;letter-spacing:0.04em;">Fetch Price — bullions.co.in (Pune)</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('dashboard')">Portfolio</button>
+    <button class="tab" onclick="switchTab('add')">+ Add</button>
+    <button class="tab" onclick="switchTab('history')">History</button>
+  </div>
+
+  <div class="scroll" id="scroll-area">
+    <div id="tab-dashboard"></div>
+    <div id="tab-add" style="display:none;"></div>
+    <div id="tab-history" style="display:none;"></div>
+  </div>
+</div>
+
+<script>
+var currency = 'INR';
+var goldInr = 0;
+var silverInr = 0;
+var usdToInr = 86;
+var pricesLoaded = false;
+var selectedMetal = 'gold';
+var isFetching = false;
+
+// ⚠️ REPLACE THIS with your Cloudflare Worker URL after deploying
+var WORKER_URL = 'https://bullion-fetcher.mihirmohnish11191.workers.dev';
+
+function getData() { try { return JSON.parse(localStorage.getItem('bt_data') || '[]'); } catch(e) { return []; } }
+function saveData(d) { localStorage.setItem('bt_data', JSON.stringify(d)); }
+
+function fmt(val) {
+  if (currency === 'INR') return '₹' + Math.round(val).toLocaleString('en-IN');
+  return '$' + (val / usdToInr).toFixed(2);
+}
+
+function fmtPrice(valInr) {
+  if (currency === 'INR') return '₹' + Math.round(valInr).toLocaleString('en-IN');
+  return '$' + (valInr / usdToInr).toFixed(2);
+}
+
+var manualGoldInr = null;
+var manualSilverInr = null;
+
+function goldPriceInr() { return manualGoldInr || goldInr; }
+function silverPriceInr() { return manualSilverInr || silverInr; }
+
+async function fetchPrices(manual) {
+  if (isFetching) return;
+  isFetching = true;
+  var btn = document.getElementById('fetch-btn');
+  if (btn) { btn.textContent = 'Fetching...'; btn.disabled = true; }
+  document.getElementById('price-updated').textContent = 'Fetching from bullions.co.in (Pune)...';
+
+  try {
+    var res = await fetch(WORKER_URL);
+    var data = await res.json();
+
+    if (data.success) {
+      goldInr = data.gold;
+      silverInr = data.silver;
+      // Also fetch USD/INR for currency conversion
+      try {
+        var rateRes = await fetch('https://api.frankfurter.app/latest?from=USD&to=INR');
+        var rateData = await rateRes.json();
+        usdToInr = rateData.rates.INR || 86;
+      } catch(e) {}
+
+      pricesLoaded = true;
+      var now = new Date();
+      document.getElementById('price-updated').textContent = 'Pune prices · bullions.co.in · ' + now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      if (btn) { btn.textContent = 'Fetch Price'; btn.disabled = false; }
+      updatePriceDisplay();
+      renderAll();
+    } else {
+      throw new Error(data.error || 'Unknown error');
+    }
+  } catch(e) {
+    // Fallback to last cached or approximate
+    if (goldInr === 0) {
+      goldInr = localStorage.getItem('bt_gold_inr') ? parseFloat(localStorage.getItem('bt_gold_inr')) : 14700;
+      silverInr = localStorage.getItem('bt_silver_inr') ? parseFloat(localStorage.getItem('bt_silver_inr')) : 228;
+    }
+    pricesLoaded = true;
+    document.getElementById('price-updated').textContent = 'Fetch failed — using cached price. Tap "Fetch Price" to retry.';
+    if (btn) { btn.textContent = 'Fetch Price'; btn.disabled = false; }
+    updatePriceDisplay();
+    renderAll();
+  }
+  isFetching = false;
+  // Cache prices
+  if (goldInr > 0) localStorage.setItem('bt_gold_inr', goldInr);
+  if (silverInr > 0) localStorage.setItem('bt_silver_inr', silverInr);
+}
+
+function overridePrice(metal) {
+  var current = metal === 'gold' ? Math.round(goldPriceInr()) : Math.round(silverPriceInr());
+  var val = prompt('Enter ' + metal + ' price per gram in ₹ INR\n(Current: ₹' + current.toLocaleString('en-IN') + ')\n\nLeave blank to use live price:', current);
+  if (val === null) return;
+  var num = parseFloat(val);
+  if (!isNaN(num) && num > 0) {
+    if (metal === 'gold') manualGoldInr = num;
+    else manualSilverInr = num;
+  } else {
+    if (metal === 'gold') manualGoldInr = null;
+    else manualSilverInr = null;
+  }
+  updatePriceDisplay();
+  renderAll();
+}
+
+function updatePriceDisplay() {
+  var gp = goldPriceInr();
+  var sp = silverPriceInr();
+  document.getElementById('gold-price').textContent = gp > 0 ? fmtPrice(gp) : '—';
+  document.getElementById('silver-price').textContent = sp > 0 ? fmtPrice(sp) : '—';
+}
+
+function setCurrency(cur) {
+  currency = cur;
+  document.getElementById('btn-inr').classList.toggle('active', cur==='INR');
+  document.getElementById('btn-usd').classList.toggle('active', cur==='USD');
+  updatePriceDisplay();
+  renderAll();
+}
+
+function switchTab(tab) {
+  ['dashboard','add','history'].forEach(function(t) {
+    document.getElementById('tab-'+t).style.display = t===tab?'block':'none';
+  });
+  document.querySelectorAll('.tab').forEach(function(el,i) {
+    el.classList.toggle('active', ['dashboard','add','history'][i]===tab);
+  });
+  document.getElementById('scroll-area').scrollTop = 0;
+  if (tab==='add') renderAdd();
+}
+
+function renderDashboard() {
+  var el = document.getElementById('tab-dashboard');
+  var data = getData();
+  var goldGrams = 0, goldInvested = 0;
+  var silverGrams = 0, silverInvested = 0;
+  data.forEach(function(e) {
+    if (e.metal==='gold') { goldGrams += e.grams; goldInvested += e.paidInr; }
+    else { silverGrams += e.grams; silverInvested += e.paidInr; }
+  });
+  var goldValue = goldGrams * goldPriceInr();
+  var silverValue = silverGrams * silverPriceInr();
+  var totalValue = goldValue + silverValue;
+  var totalInvested = goldInvested + silverInvested;
+  var totalPnl = totalValue - totalInvested;
+  var pnlPct = totalInvested > 0 ? ((totalPnl/totalInvested)*100).toFixed(1) : 0;
+  var goldAlloc = totalValue > 0 ? (goldValue/totalValue*100).toFixed(0) : 50;
+  var silverAlloc = totalValue > 0 ? (silverValue/totalValue*100).toFixed(0) : 50;
+
+  var html = '<div style="padding-top:12px;"></div>';
+
+  // Net worth card
+  html += '<div class="net-worth-card">';
+  html += '<div class="net-worth-label">Total Portfolio Value</div>';
+  html += '<div class="net-worth-val">' + fmt(totalValue) + '</div>';
+  if (totalInvested > 0) {
+    var pnlClass = totalPnl >= 0 ? 'profit' : 'loss';
+    var pnlSign = totalPnl >= 0 ? '+' : '';
+    html += '<div class="net-worth-pnl ' + pnlClass + '">' + pnlSign + fmt(totalPnl) + ' (' + pnlSign + pnlPct + '%)</div>';
+    html += '<div style="font-size:11px;color:var(--text2);font-family:DM Mono,monospace;margin-top:4px;">Invested: ' + fmt(totalInvested) + '</div>';
+  }
+  html += '</div>';
+
+  // Metal cards
+  html += '<div class="metal-cards">';
+
+  // Gold card
+  html += '<div class="metal-card">';
+  html += '<div class="metal-card-header"><span class="metal-card-name gold">Gold</span><span class="metal-card-grams">' + goldGrams.toFixed(2) + 'g</span></div>';
+  html += '<div class="metal-card-val gold">' + fmt(goldValue) + '</div>';
+  html += '<div class="metal-card-invested">Invested: ' + fmt(goldInvested) + '</div>';
+  if (goldInvested > 0) {
+    var gPnl = goldValue - goldInvested;
+    var gPct = ((gPnl/goldInvested)*100).toFixed(1);
+    var gClass = gPnl >= 0 ? 'profit' : 'loss';
+    html += '<div class="metal-card-pnl ' + gClass + '">' + (gPnl>=0?'+':'') + fmt(gPnl) + ' (' + (gPnl>=0?'+':'') + gPct + '%)</div>';
+  }
+  html += '</div>';
+
+  // Silver card
+  html += '<div class="metal-card">';
+  html += '<div class="metal-card-header"><span class="metal-card-name silver">Silver</span><span class="metal-card-grams">' + silverGrams.toFixed(2) + 'g</span></div>';
+  html += '<div class="metal-card-val silver">' + fmt(silverValue) + '</div>';
+  html += '<div class="metal-card-invested">Invested: ' + fmt(silverInvested) + '</div>';
+  if (silverInvested > 0) {
+    var sPnl = silverValue - silverInvested;
+    var sPct = ((sPnl/silverInvested)*100).toFixed(1);
+    var sClass = sPnl >= 0 ? 'profit' : 'loss';
+    html += '<div class="metal-card-pnl ' + sClass + '">' + (sPnl>=0?'+':'') + fmt(sPnl) + ' (' + (sPnl>=0?'+':'') + sPct + '%)</div>';
+  }
+  html += '</div>';
+  html += '</div>';
+
+  // Allocation bar
+  if (totalValue > 0) {
+    html += '<div class="allocation-card">';
+    html += '<div class="allocation-label">Allocation</div>';
+    html += '<div class="alloc-bar"><div class="alloc-gold" style="width:' + goldAlloc + '%;"></div><div class="alloc-silver" style="width:' + silverAlloc + '%;"></div></div>';
+    html += '<div class="alloc-legend">';
+    html += '<div class="alloc-item"><div class="alloc-dot" style="background:var(--gold);"></div>Gold ' + goldAlloc + '%</div>';
+    html += '<div class="alloc-item"><div class="alloc-dot" style="background:var(--silver);"></div>Silver ' + silverAlloc + '%</div>';
+    html += '</div></div>';
+  }
+
+  if (data.length === 0) {
+    html += '<div class="no-data">No holdings yet.<br/>Tap + Add to log your first purchase.</div>';
+  }
+
+  el.innerHTML = html;
+}
+
+function renderAdd() {
+  var el = document.getElementById('tab-add');
+  var gpInr = goldPriceInr();
+  var spInr = silverPriceInr();
+  var today = new Date().toISOString().slice(0,10);
+
+  var html = '<div style="padding-top:12px;"></div>';
+  html += '<div class="form-card">';
+  html += '<div class="form-label">Metal</div>';
+  html += '<div class="metal-selector">';
+  html += '<button class="metal-chip gold ' + (selectedMetal==='gold'?'active':'') + '" onclick="selectMetal(\'gold\')">Gold</button>';
+  html += '<button class="metal-chip silver ' + (selectedMetal==='silver'?'active':'') + '" onclick="selectMetal(\'silver\')">Silver</button>';
+  html += '</div>';
+
+  html += '<div class="form-label">Current market price</div>';
+  html += '<div class="current-price-hint">';
+  html += '<div><div class="hint-label">Live price per gram</div><div class="hint-val ' + selectedMetal + '">' + (selectedMetal==='gold' ? fmtPrice(gpInr) : fmtPrice(spInr)) + '</div></div>';
+  html += '<button class="use-btn" onclick="useLivePrice()">Use this</button>';
+  html += '</div>';
+
+  html += '<div class="form-label">Purchase details</div>';
+  html += '<input class="form-input" type="text" id="f-name" placeholder="Label (e.g. 1g Gold Coin, Silver Bar)"/>';
+  html += '<div class="form-row">';
+  html += '<input class="form-input" type="number" id="f-grams" placeholder="Weight (grams)" min="0" step="0.1"/>';
+  html += '<input class="form-input" type="date" id="f-date" value="' + today + '"/>';
+  html += '</div>';
+  html += '<input class="form-input" type="number" id="f-price" placeholder="Price paid per gram (₹ INR)" min="0"/>';
+  html += '<div class="form-hint" id="f-total-hint"></div>';
+  html += '<input class="form-input" type="text" id="f-notes" placeholder="Notes (optional — e.g. MMTC coin, Tanishq)"/>';
+  html += '<button class="add-btn" onclick="addEntry()">Add to Locker</button>';
+  html += '</div>';
+
+  el.innerHTML = html;
+
+  // Live total calculation
+  ['f-grams','f-price'].forEach(function(id) {
+    var inp = document.getElementById(id);
+    if (inp) inp.addEventListener('input', updateTotalHint);
+  });
+}
+
+function updateTotalHint() {
+  var g = parseFloat(document.getElementById('f-grams').value);
+  var p = parseFloat(document.getElementById('f-price').value);
+  var hint = document.getElementById('f-total-hint');
+  if (!isNaN(g) && !isNaN(p) && g > 0 && p > 0) {
+    hint.textContent = 'Total paid: ₹' + Math.round(g*p).toLocaleString('en-IN');
+  } else {
+    hint.textContent = '';
+  }
+}
+
+function useLivePrice() {
+  var price = selectedMetal === 'gold' ? Math.round(goldPriceInr()) : Math.round(silverPriceInr());
+  var inp = document.getElementById('f-price');
+  if (inp) { inp.value = price; updateTotalHint(); }
+}
+
+function selectMetal(m) {
+  selectedMetal = m;
+  renderAdd();
+}
+
+function addEntry() {
+  var name = document.getElementById('f-name').value.trim();
+  var grams = parseFloat(document.getElementById('f-grams').value);
+  var date = document.getElementById('f-date').value;
+  var pricePerGram = parseFloat(document.getElementById('f-price').value);
+  var notes = document.getElementById('f-notes').value.trim();
+
+  if (!name || isNaN(grams) || grams <= 0 || !date || isNaN(pricePerGram) || pricePerGram <= 0) {
+    alert('Please fill in all required fields.');
+    return;
+  }
+
+  var data = getData();
+  data.push({
+    id: Date.now(),
+    metal: selectedMetal,
+    name: name,
+    grams: grams,
+    date: date,
+    pricePerGramInr: pricePerGram,
+    paidInr: grams * pricePerGram,
+    notes: notes
+  });
+  saveData(data);
+  renderAll();
+  switchTab('dashboard');
+}
+
+function deleteEntry(id) {
+  if (!confirm('Remove this entry?')) return;
+  var data = getData().filter(function(e) { return e.id !== id; });
+  saveData(data);
+  renderAll();
+}
+
+function renderHistory() {
+  var el = document.getElementById('tab-history');
+  var data = getData();
+  if (data.length === 0) { el.innerHTML = '<div class="no-data">No entries yet.<br/>Add your first purchase.</div>'; return; }
+
+  var sorted = data.slice().sort(function(a,b) { return new Date(b.date) - new Date(a.date); });
+  var html = '<div style="padding-top:12px;"></div>';
+  html += '<div class="section-header"><span class="section-title">All Purchases</span><span style="font-size:11px;color:var(--text3);font-family:DM Mono,monospace;">' + data.length + ' entries</span></div>';
+
+  sorted.forEach(function(e) {
+    var currentPriceInr = e.metal === 'gold' ? goldPriceInr() : silverPriceInr();
+    var currentVal = e.grams * currentPriceInr;
+    var pnl = currentVal - e.paidInr;
+    var pnlPct = ((pnl/e.paidInr)*100).toFixed(1);
+    var pnlClass = pnl >= 0 ? 'profit' : 'loss';
+    var date = new Date(e.date + 'T00:00:00');
+    var dateStr = date.toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'});
+
+    html += '<div class="history-item">';
+    html += '<div class="history-top">';
+    html += '<div class="history-left">';
+    html += '<div class="history-metal ' + e.metal + '">' + e.metal.toUpperCase() + '</div>';
+    html += '<div class="history-name">' + e.name + '</div>';
+    html += '<div class="history-date">' + dateStr + (e.notes ? ' · ' + e.notes : '') + '</div>';
+    html += '</div>';
+    html += '<div class="history-right">';
+    html += '<div class="history-grams ' + e.metal + '">' + e.grams + 'g</div>';
+    html += '<div class="history-paid">Paid: ' + fmt(e.paidInr) + '</div>';
+    html += '<div class="history-current ' + pnlClass + '">' + (pnl>=0?'+':'') + fmt(pnl) + ' (' + (pnl>=0?'+':'') + pnlPct + '%)</div>';
+    html += '</div></div>';
+    html += '<button class="del-btn" onclick="deleteEntry(' + e.id + ')">Remove</button>';
+    html += '</div>';
+  });
+
+  el.innerHTML = html;
+}
+
+function renderAll() {
+  renderDashboard();
+  if (document.getElementById('tab-add').style.display !== 'none') renderAdd();
+  if (document.getElementById('tab-history').style.display !== 'none') renderHistory();
+}
+
+// Load cached prices on start
+goldInr = localStorage.getItem('bt_gold_inr') ? parseFloat(localStorage.getItem('bt_gold_inr')) : 0;
+silverInr = localStorage.getItem('bt_silver_inr') ? parseFloat(localStorage.getItem('bt_silver_inr')) : 0;
+if (goldInr > 0) {
+  pricesLoaded = true;
+  updatePriceDisplay();
+}
+renderAll();
+</script>
+</body>
+</html>
