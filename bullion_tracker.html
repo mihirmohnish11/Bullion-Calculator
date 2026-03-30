@@ -165,7 +165,7 @@ var selectedMetal = 'gold';
 var isFetching = false;
 
 // ⚠️ REPLACE THIS with your Cloudflare Worker URL after deploying
-var WORKER_URL = 'https://YOUR_WORKER_NAME.YOUR_SUBDOMAIN.workers.dev';
+var WORKER_URL = 'https://bullion-fetcher.mihirmohnish11191.workers.dev';
 
 function getData() { try { return JSON.parse(localStorage.getItem('bt_data') || '[]'); } catch(e) { return []; } }
 function saveData(d) { localStorage.setItem('bt_data', JSON.stringify(d)); }
